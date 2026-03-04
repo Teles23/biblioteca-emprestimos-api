@@ -5,6 +5,7 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testEnvironment: 'node',
   testRegex: '.*\\.spec\\.ts$',
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
   },
