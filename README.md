@@ -35,10 +35,24 @@ Copie `.env.example` para `.env` e ajuste os valores:
    ```bash
    npm run prisma:migrate
    ```
-4. Rode em desenvolvimento:
+4. Popule dados iniciais (admin + dados demo):
+   ```bash
+   npm run prisma:seed
+   ```
+5. Rode em desenvolvimento:
    ```bash
    npm run dev
    ```
+
+## Docker
+
+Para subir API + PostgreSQL com Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+A API sobe em `http://localhost:3333` e o banco em `localhost:5438`.
 
 ## Prisma (Prisma 7)
 
@@ -55,9 +69,85 @@ Copie `.env.example` para `.env` e ajuste os valores:
 - `npm run lint`: roda ESLint.
 - `npm run prisma:generate`: gera Prisma Client.
 - `npm run prisma:migrate`: executa `prisma migrate dev`.
+- `npm run prisma:seed`: cria usuario admin e dados iniciais.
+
+## Seed inicial
+
+O seed cria:
+
+- Usuario admin com roles `ROLE_ADMIN` e `ROLE_USER`
+- Categorias demo
+- Autores demo
+- Livro demo (`1984`)
+
+Variaveis opcionais para admin:
+
+- `SEED_ADMIN_NAME`
+- `SEED_ADMIN_EMAIL`
+- `SEED_ADMIN_PASSWORD`
 
 ## Estrutura
 
 - `src/modules/*`: modulos de dominio (auth, users, books, authors, categories, loans)
 - `src/shared/infra`: infraestrutura compartilhada (HTTP, middleware, banco)
 - `src/config`: configuracoes de ambiente
+
+## Endpoints principais
+
+### Publicos
+
+- `GET /health`
+- `POST /auth/register`
+- `POST /auth/login`
+
+### Protegidos (JWT)
+
+- `GET /users/me`
+- `GET /books`
+- `GET /books/:id`
+- `GET /loans/me`
+
+### Somente admin (`ROLE_ADMIN`)
+
+- `GET /users`
+- `POST /users`
+- `POST /authors`
+- `GET /authors`
+- `GET /authors/:id`
+- `PUT /authors/:id`
+- `DELETE /authors/:id`
+- `POST /categories`
+- `GET /categories`
+- `GET /categories/:id`
+- `PUT /categories/:id`
+- `DELETE /categories/:id`
+- `POST /books`
+- `PUT /books/:id`
+- `DELETE /books/:id`
+- `POST /loans`
+- `POST /loans/:id/return`
+- `GET /loans/active`
+- `GET /loans/overdue`
+- `GET /loans/history`
+
+## Funcionalidades implementadas
+
+- Autenticacao com JWT e RBAC (role admin).
+- Cadastro publico com politica de senha forte e hash com bcrypt.
+- CRUD de autores.
+- CRUD de categorias.
+- CRUD de livros com validacao de categoria/autores e bloqueio de exclusao de livro emprestado.
+- Cadastro de leitor por admin com senha automatica.
+- Fluxo de emprestimo e devolucao com calculo de atraso.
+- Listagens de emprestimos ativos, atrasados, historico e area do usuario.
+- Tratamento centralizado de erros.
+
+## Funcionalidades nao implementadas
+
+- Envio de senha automatica por e-mail no cadastro de leitor (somente retorno no payload da API).
+- Paginacao e ordenacao configuravel nas listagens.
+
+## Justificativas
+
+- O envio de senha por e-mail foi mantido fora do escopo para evitar acoplamento com provedor SMTP nesta etapa.
+- A paginacao foi adiada para priorizar cobertura dos fluxos funcionais obrigatorios do desafio.
