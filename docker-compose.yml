@@ -1,0 +1,31 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: biblioteca_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: biblioteca_emprestimos
+    ports:
+      - "5438:5432"
+    volumes:
+      - biblioteca_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+    container_name: biblioteca_backend
+    restart: unless-stopped
+    depends_on:
+      - database
+    environment:
+      PORT: 3333
+      JWT_SECRET: your_jwt_secret
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/biblioteca_emprestimos
+    ports:
+      - "3333:3333"
+    command: sh -c "npm run prisma:generate && npx prisma migrate deploy && npm run prisma:seed && npm run start"
+
+volumes:
+  biblioteca_pgdata:
