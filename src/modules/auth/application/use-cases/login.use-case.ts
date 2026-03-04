@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import { env } from '../../../../config/env';
+import { AppError } from '../../../../shared/errors/app-error';
 import type { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 import type { LoginDTO, LoginResponseDTO } from '../dtos/login.dto';
 
@@ -12,20 +13,27 @@ export class LoginUseCase {
     const user = await this.authRepository.findByEmail(email);
 
     if (!user) {
-      throw new Error('Credenciais inválidas.');
+      throw new AppError('Credenciais invalidas.', 401);
     }
 
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatches) {
-      throw new Error('Credenciais inválidas.');
+      throw new AppError('Credenciais invalidas.', 401);
     }
 
-    const accessToken = jwt.sign({}, env.jwtSecret, {
+    const accessToken = jwt.sign({ email: user.email, roles: user.roles }, env.jwtSecret, {
       subject: user.id,
       expiresIn: '1d',
     });
 
-    return { accessToken };
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        roles: user.roles,
+      },
+    };
   }
 }

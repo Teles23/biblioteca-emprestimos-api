@@ -6,11 +6,91 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BookStatus {
+  AVAILABLE
+  BORROWED
+}
+
+enum LoanStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
 model User {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String     @unique
+  phone     String?
   password  String
+  roles     String[]
+  status    UserStatus @default(ACTIVE)
+  loans     Loan[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  books     Book[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Author {
+  id        String       @id @default(uuid())
+  name      String
+  biography String?
+  books     BookAuthor[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Book {
+  id              String       @id @default(uuid())
+  title           String       @unique
+  publicationYear Int
+  categoryId      String
+  category        Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  authors         BookAuthor[]
+  loans           Loan[]
+  status          BookStatus   @default(AVAILABLE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([status])
+}
+
+model BookAuthor {
+  bookId    String
+  authorId  String
+  book      Book   @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  author    Author @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+
+  @@id([bookId, authorId])
+}
+
+model Loan {
+  id         String     @id @default(uuid())
+  bookId     String
+  userId     String
+  book       Book       @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  loanDate   DateTime
+  dueDate    DateTime
+  returnDate DateTime?
+  status     LoanStatus @default(ACTIVE)
+  lateDays   Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([bookId, status])
+  @@index([userId, status])
 }

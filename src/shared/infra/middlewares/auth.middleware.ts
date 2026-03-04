@@ -5,13 +5,15 @@ import { env } from '../../../config/env';
 
 interface TokenPayload {
   sub: string;
+  email: string;
+  roles: string[];
 }
 
 export function authMiddleware(request: Request, response: Response, next: NextFunction): void {
   const authHeader = request.headers.authorization;
 
   if (!authHeader) {
-    response.status(401).json({ message: 'Token não informado.' });
+    response.status(401).json({ message: 'Token nao informado.' });
     return;
   }
 
@@ -22,10 +24,12 @@ export function authMiddleware(request: Request, response: Response, next: NextF
 
     request.user = {
       id: decoded.sub,
+      email: decoded.email,
+      roles: decoded.roles,
     };
 
     next();
   } catch {
-    response.status(401).json({ message: 'Token inválido.' });
+    response.status(401).json({ message: 'Token invalido.' });
   }
 }
