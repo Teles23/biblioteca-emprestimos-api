@@ -1,9 +1,15 @@
 import { Router } from 'express';
 
+import { authMiddleware } from '../../../../shared/infra/middlewares/auth.middleware';
+import { requireRole } from '../../../../shared/infra/middlewares/role.middleware';
 import { UsersController } from '../controllers/users.controller';
 
 export const usersRoutes = Router();
 
 const usersController = new UsersController();
 
-usersRoutes.get('/', usersController.list.bind(usersController));
+usersRoutes.use(authMiddleware);
+
+usersRoutes.get('/me', usersController.me.bind(usersController));
+usersRoutes.get('/', requireRole('ROLE_ADMIN'), usersController.list.bind(usersController));
+usersRoutes.post('/', requireRole('ROLE_ADMIN'), usersController.create.bind(usersController));

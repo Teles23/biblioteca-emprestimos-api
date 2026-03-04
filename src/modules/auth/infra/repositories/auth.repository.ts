@@ -3,6 +3,20 @@ import { AuthUserEntity } from '../../domain/entities/auth.entity';
 import type { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 
 export class AuthRepository implements IAuthRepository {
+  async create(data: { name: string; email: string; password: string; roles: string[] }): Promise<AuthUserEntity> {
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        roles: data.roles,
+        status: 'ACTIVE',
+      },
+    });
+
+    return new AuthUserEntity(user.id, user.email, user.password, user.roles);
+  }
+
   async findByEmail(email: string): Promise<AuthUserEntity | null> {
     const user = await prisma.user.findUnique({ where: { email } });
 
@@ -10,6 +24,6 @@ export class AuthRepository implements IAuthRepository {
       return null;
     }
 
-    return new AuthUserEntity(user.id, user.email, user.password);
+    return new AuthUserEntity(user.id, user.email, user.password, user.roles);
   }
 }
