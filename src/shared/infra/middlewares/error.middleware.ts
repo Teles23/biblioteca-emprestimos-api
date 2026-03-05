@@ -7,8 +7,10 @@ export function errorMiddleware(
   error: Error,
   _request: Request,
   response: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ): Response {
+  void next;
+
   if (error instanceof AppError) {
     return response.status(error.statusCode).json({ message: error.message });
   }

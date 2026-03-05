@@ -88,7 +88,7 @@ Variaveis opcionais para admin:
 
 ## Estrutura
 
-- `src/modules/*`: modulos de dominio (auth, users, books, authors, categories, loans)
+- `src/modules/*`: modulos de dominio (auth, users, books, authors, categories, loans, dashboard)
 - `src/shared/infra`: infraestrutura compartilhada (HTTP, middleware, banco)
 - `src/config`: configuracoes de ambiente
 
@@ -96,7 +96,7 @@ Variaveis opcionais para admin:
 
 ### Publicos
 
-- `GET /health`
+- `GET /health` -> `{ "status": "ok" }`
 - `POST /auth/register`
 - `POST /auth/login`
 
@@ -129,6 +129,7 @@ Variaveis opcionais para admin:
 - `GET /loans/active`
 - `GET /loans/overdue`
 - `GET /loans/history`
+- `GET /dashboard/stats`
 
 ## Funcionalidades implementadas
 
@@ -140,6 +141,7 @@ Variaveis opcionais para admin:
 - Cadastro de leitor por admin com senha automatica.
 - Fluxo de emprestimo e devolucao com calculo de atraso.
 - Listagens de emprestimos ativos, atrasados, historico e area do usuario.
+- Dashboard administrativo com metricas agregadas e dados recentes de emprestimos.
 - Tratamento centralizado de erros.
 
 ## Funcionalidades nao implementadas
