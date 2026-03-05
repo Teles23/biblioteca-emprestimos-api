@@ -12,13 +12,27 @@ export class AuthRepository implements IAuthRepository {
         roles: data.roles,
         status: 'ACTIVE',
       },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        roles: true,
+      },
     });
 
     return new AuthUserEntity(user.id, user.email, user.password, user.roles);
   }
 
   async findByEmail(email: string): Promise<AuthUserEntity | null> {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        roles: true,
+      },
+    });
 
     if (!user) {
       return null;
