@@ -11,7 +11,7 @@ import { dashboardRoutes } from '../../../../modules/dashboard/infra/routes/dash
 export const router = Router();
 
 router.get('/health', (_request, response) => {
-  response.status(200).json({ status: 'ok' });
+  return response.json({ status: 'ok' });
 });
 
 router.use('/auth', authRoutes);
