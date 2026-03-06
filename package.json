@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch src/shared/infra/http/server.ts",
+    "debug": "node --inspect-brk ./node_modules/tsx/dist/cli.mjs watch src/shared/infra/http/server.ts",
     "build": "rimraf dist && tsc -p tsconfig.json",
     "start": "node dist/shared/infra/http/server.js",
     "test": "jest --passWithNoTests --runInBand",

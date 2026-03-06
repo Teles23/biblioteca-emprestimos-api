@@ -20,6 +20,10 @@ export function errorMiddleware(
       return response.status(409).json({ message: 'Registro duplicado.' });
     }
 
+    if (error.code === 'P2003') {
+      return response.status(409).json({ message: 'Operacao bloqueada por vinculos existentes.' });
+    }
+
     if (error.code === 'P2025') {
       return response.status(404).json({ message: 'Registro nao encontrado.' });
     }

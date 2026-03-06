@@ -119,7 +119,15 @@ export class BooksRepository implements IBooksRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.book.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.bookAuthor.deleteMany({
+        where: { bookId: id },
+      });
+
+      await tx.book.delete({
+        where: { id },
+      });
+    });
   }
 
   private toEntity(book: {
