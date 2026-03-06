@@ -21,7 +21,9 @@ export function errorMiddleware(
     }
 
     if (error.code === 'P2003') {
-      return response.status(409).json({ message: 'Operacao bloqueada por vinculos existentes.' });
+      return response.status(409).json({
+        message: 'Operação bloqueada: existem vínculos ativos com este registro.',
+      });
     }
 
     if (error.code === 'P2025') {
