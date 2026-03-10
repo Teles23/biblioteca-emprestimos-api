@@ -58,7 +58,15 @@ export class AuthorsRepository implements IAuthorsRepository {
     biography: string | null;
     createdAt: Date;
     updatedAt: Date;
+    bookCount?: number;
   }): AuthorEntity {
-    return new AuthorEntity(author.id, author.name, author.biography, author.createdAt, author.updatedAt);
+    return new AuthorEntity(
+      author.id,
+      author.name,
+      author.biography,
+      author.createdAt,
+      author.updatedAt,
+      author.bookCount,
+    );
   }
 }

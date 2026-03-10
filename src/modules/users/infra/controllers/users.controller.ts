@@ -74,4 +74,40 @@ export class UsersController {
       next(error);
     }
   }
+
+  async findById(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
+    const { id } = request.params;
+    try {
+      const user = await this.usersRepository.findById(id);
+
+      if (!user) {
+        throw new AppError('Usuario nao encontrado.', 404);
+      }
+
+      return response.status(200).json(user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async update(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
+    const { id } = request.params;
+    const { name, email, phone, roles, status } = request.body;
+    try {
+      const user = await this.usersRepository.update(id, { name, email, phone, roles, status });
+      return response.status(200).json(user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
+    const { id } = request.params;
+    try {
+      await this.usersRepository.delete(id);
+      return response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
 }

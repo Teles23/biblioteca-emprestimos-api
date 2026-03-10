@@ -9,7 +9,12 @@ export class LoansController {
   private readonly loansRepository = new LoansRepository();
 
   async create(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
-    const { bookId, userId } = request.body as { bookId?: string; userId?: string };
+    const { bookId, userId, loanDate: customLoanDate, dueDate: customDueDate } = request.body as { 
+      bookId?: string; 
+      userId?: string;
+      loanDate?: string;
+      dueDate?: string;
+    };
 
     try {
       if (!bookId || !userId) {
@@ -38,8 +43,8 @@ export class LoansController {
         throw new AppError('Livro ja possui emprestimo ativo.', 409);
       }
 
-      const loanDate = new Date();
-      const dueDate = addDays(loanDate, 14);
+      const loanDate = customLoanDate ? new Date(customLoanDate) : new Date();
+      const dueDate = customDueDate ? new Date(customDueDate) : addDays(loanDate, 14);
 
       const loan = await prisma.$transaction(async (tx) => {
         const createdLoan = await tx.loan.create({
@@ -162,16 +167,41 @@ export class LoansController {
   async listHistory(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
     const userId = typeof request.query.userId === 'string' ? request.query.userId : undefined;
     const bookId = typeof request.query.bookId === 'string' ? request.query.bookId : undefined;
+    const status = typeof request.query.status === 'string' ? (request.query.status as any) : undefined;
+    const startDate = typeof request.query.startDate === 'string' ? new Date(request.query.startDate) : undefined;
+    const endDate = typeof request.query.endDate === 'string' ? new Date(request.query.endDate) : undefined;
 
     try {
+      const where: any = {
+        userId,
+        bookId,
+        status,
+      };
+
+      if (startDate && endDate) {
+        where.loanDate = {
+          gte: startDate,
+          lte: endDate,
+        };
+      }
+
       const loans = await prisma.loan.findMany({
-        where: {
-          userId,
-          bookId,
-        },
+        where,
         include: {
           book: {
-            select: { id: true, title: true },
+            select: { 
+              id: true, 
+              title: true, 
+              authors: { 
+                select: { 
+                  author: { 
+                    select: { name: true } 
+                  } 
+                } 
+              }, 
+              category: { select: { name: true } }, 
+              publicationYear: true 
+            },
           },
           user: {
             select: { id: true, name: true, email: true },

@@ -8,5 +8,6 @@ export class UserEntity {
     public readonly status: 'ACTIVE' | 'INACTIVE',
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly loanCount?: number,
   ) {}
 }
