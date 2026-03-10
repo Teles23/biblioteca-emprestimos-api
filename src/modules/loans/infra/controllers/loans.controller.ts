@@ -9,7 +9,12 @@ export class LoansController {
   private readonly loansRepository = new LoansRepository();
 
   async create(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
-    const { bookId, userId } = request.body as { bookId?: string; userId?: string };
+    const { bookId, userId, loanDate: customLoanDate, dueDate: customDueDate } = request.body as { 
+      bookId?: string; 
+      userId?: string;
+      loanDate?: string;
+      dueDate?: string;
+    };
 
     try {
       if (!bookId || !userId) {
@@ -38,8 +43,8 @@ export class LoansController {
         throw new AppError('Livro ja possui emprestimo ativo.', 409);
       }
 
-      const loanDate = new Date();
-      const dueDate = addDays(loanDate, 14);
+      const loanDate = customLoanDate ? new Date(customLoanDate) : new Date();
+      const dueDate = customDueDate ? new Date(customDueDate) : addDays(loanDate, 14);
 
       const loan = await prisma.$transaction(async (tx) => {
         const createdLoan = await tx.loan.create({
