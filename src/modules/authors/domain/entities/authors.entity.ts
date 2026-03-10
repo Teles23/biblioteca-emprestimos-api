@@ -5,5 +5,6 @@ export class AuthorEntity {
     public readonly biography: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly bookCount?: number,
   ) {}
 }
