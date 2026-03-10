@@ -12,4 +12,7 @@ usersRoutes.use(authMiddleware);
 
 usersRoutes.get('/me', usersController.me.bind(usersController));
 usersRoutes.get('/', requireRole('ROLE_ADMIN'), usersController.list.bind(usersController));
+usersRoutes.get('/:id', requireRole('ROLE_ADMIN'), usersController.findById.bind(usersController));
 usersRoutes.post('/', requireRole('ROLE_ADMIN'), usersController.create.bind(usersController));
+usersRoutes.put('/:id', requireRole('ROLE_ADMIN'), usersController.update.bind(usersController));
+usersRoutes.delete('/:id', requireRole('ROLE_ADMIN'), usersController.delete.bind(usersController));

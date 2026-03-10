@@ -36,10 +36,18 @@ export class UsersRepository implements IUsersRepository {
 
   async list(): Promise<UserEntity[]> {
     const users = await prisma.user.findMany({
+      include: {
+        _count: {
+          select: { loans: true },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
-    return users.map((user) => this.toEntity(user));
+    return users.map((user) => this.toEntity({
+      ...user,
+      loanCount: user._count?.loans,
+    }));
   }
 
   private toEntity(user: {
@@ -51,6 +59,7 @@ export class UsersRepository implements IUsersRepository {
     status: 'ACTIVE' | 'INACTIVE';
     createdAt: Date;
     updatedAt: Date;
+    loanCount?: number;
   }): UserEntity {
     return new UserEntity(
       user.id,
@@ -61,6 +70,20 @@ export class UsersRepository implements IUsersRepository {
       user.status,
       user.createdAt,
       user.updatedAt,
+      user.loanCount,
     );
+  }
+
+  async update(id: string, data: { name?: string; email?: string; phone?: string; roles?: string[]; status?: 'ACTIVE' | 'INACTIVE' }): Promise<UserEntity> {
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+    });
+
+    return this.toEntity(user);
+  }
+
+  async delete(id: string): Promise<void> {
+    await prisma.user.delete({ where: { id } });
   }
 }
