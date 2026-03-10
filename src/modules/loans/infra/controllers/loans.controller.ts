@@ -162,16 +162,41 @@ export class LoansController {
   async listHistory(request: Request, response: Response, next: NextFunction): Promise<Response | void> {
     const userId = typeof request.query.userId === 'string' ? request.query.userId : undefined;
     const bookId = typeof request.query.bookId === 'string' ? request.query.bookId : undefined;
+    const status = typeof request.query.status === 'string' ? (request.query.status as any) : undefined;
+    const startDate = typeof request.query.startDate === 'string' ? new Date(request.query.startDate) : undefined;
+    const endDate = typeof request.query.endDate === 'string' ? new Date(request.query.endDate) : undefined;
 
     try {
+      const where: any = {
+        userId,
+        bookId,
+        status,
+      };
+
+      if (startDate && endDate) {
+        where.loanDate = {
+          gte: startDate,
+          lte: endDate,
+        };
+      }
+
       const loans = await prisma.loan.findMany({
-        where: {
-          userId,
-          bookId,
-        },
+        where,
         include: {
           book: {
-            select: { id: true, title: true },
+            select: { 
+              id: true, 
+              title: true, 
+              authors: { 
+                select: { 
+                  author: { 
+                    select: { name: true } 
+                  } 
+                } 
+              }, 
+              category: { select: { name: true } }, 
+              publicationYear: true 
+            },
           },
           user: {
             select: { id: true, name: true, email: true },
