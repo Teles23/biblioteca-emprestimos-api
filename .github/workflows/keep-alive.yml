@@ -41,28 +41,57 @@ jobs:
           SUPABASE_URL="${SUPABASE_URL_INPUT:-${SUPABASE_URL_SECRET:-${SUPABASE_URL_VAR:-}}}"
           SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY_INPUT:-${SUPABASE_ANON_KEY_SECRET:-${SUPABASE_ANON_KEY_VAR:-}}}"
 
-          # Remove espaços nas pontas e aspas simples/duplas acidentais
           sanitize_value() {
             local value="$1"
             value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             value="${value%\"}"
             value="${value#\"}"
-            value="${value%'}"
-            value="${value#'}"
+            value="${value%\'}"
+            value="${value#\'}"
+            value="${value//$'\r'/}"
             echo "$value"
           }
 
-          RENDER_BACKEND_URL="$(sanitize_value "$RENDER_BACKEND_URL")"
-          SUPABASE_URL="$(sanitize_value "$SUPABASE_URL")"
+          normalize_url() {
+            local value="$1"
+            value="$(sanitize_value "$value")"
+
+            # Erro comum: cadastrar VAR=https://... em vez de só o valor
+            # (não aplicar para URLs válidas que já contenham '=' em query string)
+            if [[ "$value" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+              value="${value#*=}"
+              value="$(sanitize_value "$value")"
+            fi
+
+            # só adiciona https:// quando não existe esquema
+            if [ -n "$value" ] && [[ ! "$value" =~ ^[A-Za-z][A-Za-z0-9+.-]*:// ]]; then
+              value="https://$value"
+            fi
+
+            value="${value%/}"
+            echo "$value"
+          }
+
+          RENDER_BACKEND_URL="$(normalize_url "$RENDER_BACKEND_URL")"
+          SUPABASE_URL="$(normalize_url "$SUPABASE_URL")"
           SUPABASE_ANON_KEY="$(sanitize_value "$SUPABASE_ANON_KEY")"
 
-          # Normaliza URLs removendo barra no final
-          RENDER_BACKEND_URL="${RENDER_BACKEND_URL%/}"
-          SUPABASE_URL="${SUPABASE_URL%/}"
+          # Se vier URL de conexão do Postgres/Supabase, tenta converter para URL do projeto
+          if [[ "$SUPABASE_URL" =~ ^postgres(ql)?:// ]]; then
+            PROJECT_REF=""
+            if [[ "$SUPABASE_URL" =~ postgres\.([a-z0-9]+): ]]; then
+              PROJECT_REF="${BASH_REMATCH[1]}"
+            elif [[ "$SUPABASE_URL" =~ @db\.([a-z0-9]+)\.supabase\.co ]]; then
+              PROJECT_REF="${BASH_REMATCH[1]}"
+            fi
 
-          # Se alguém salvou apenas o domínio do Supabase sem protocolo, tenta corrigir automaticamente
-          if [ -n "$SUPABASE_URL" ] && [[ "$SUPABASE_URL" =~ ^[A-Za-z0-9.-]+\.supabase\.co$ ]]; then
-            SUPABASE_URL="https://$SUPABASE_URL"
+            if [ -n "$PROJECT_REF" ]; then
+              SUPABASE_URL="https://${PROJECT_REF}.supabase.co"
+              echo "::notice::SUPABASE_URL parecia ser uma URL de banco. Convertida automaticamente para $SUPABASE_URL."
+            else
+              echo "::warning::SUPABASE_URL foi informada como URL de banco (postgres://...). Use a URL do projeto (https://<project-ref>.supabase.co)."
+              SUPABASE_URL=""
+            fi
           fi
 
           if [ -n "$RENDER_BACKEND_URL" ] && [[ ! "$RENDER_BACKEND_URL" =~ ^https?:// ]]; then
@@ -80,20 +109,26 @@ jobs:
             echo "RENDER_BACKEND_URL=$RENDER_BACKEND_URL" >> "$GITHUB_ENV"
           else
             echo "HAS_RENDER_BACKEND=false" >> "$GITHUB_ENV"
-            echo "::warning::RENDER_BACKEND_URL não configurada. Defina em Secrets ou Variables."
+            echo "::notice::RENDER_BACKEND_URL não configurada. Ping do backend será ignorado."
           fi
 
-          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+          if [ -n "$SUPABASE_URL" ]; then
             echo "HAS_SUPABASE=true" >> "$GITHUB_ENV"
             echo "SUPABASE_URL=$SUPABASE_URL" >> "$GITHUB_ENV"
-            echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> "$GITHUB_ENV"
+            if [ -n "$SUPABASE_ANON_KEY" ]; then
+              echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> "$GITHUB_ENV"
+              echo "HAS_SUPABASE_KEY=true" >> "$GITHUB_ENV"
+            else
+              echo "HAS_SUPABASE_KEY=false" >> "$GITHUB_ENV"
+              echo "::notice::SUPABASE_ANON_KEY não configurada; usando ping de health sem autenticação."
+            fi
           else
             echo "HAS_SUPABASE=false" >> "$GITHUB_ENV"
-            echo "::warning::SUPABASE_URL e/ou SUPABASE_ANON_KEY não configuradas. Defina em Secrets/Variables sem aspas e com URL completa."
+            echo "::notice::SUPABASE_URL não configurada. Ping do Supabase será ignorado."
           fi
 
-          if [ -z "$RENDER_BACKEND_URL" ] && { [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; }; then
-            echo "::error::Nenhuma configuração válida encontrada para os pings. Configure Secrets/Variables ou use workflow_dispatch inputs."
+          if [ -z "$RENDER_BACKEND_URL" ] && [ -z "$SUPABASE_URL" ]; then
+            echo "::error::Nenhuma configuração válida encontrada para os pings. Configure ao menos RENDER_BACKEND_URL ou SUPABASE_URL."
             exit 1
           fi
 
@@ -127,13 +162,22 @@ jobs:
           set -euo pipefail
 
           echo "Pingando Supabase..."
+          CURL_ARGS=(
+            -L -sS -o /dev/null -w "%{http_code}"
+            --connect-timeout 10
+            --max-time 20
+            "$SUPABASE_URL/auth/v1/health"
+          )
+
+          if [ "${HAS_SUPABASE_KEY:-false}" = "true" ]; then
+            CURL_ARGS+=(
+              -H "apikey: $SUPABASE_ANON_KEY"
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY"
+            )
+          fi
+
           set +e
-          HTTP_CODE=$(curl -L -sS -o /dev/null -w "%{http_code}" \
-            --connect-timeout 10 \
-            --max-time 20 \
-            "$SUPABASE_URL/auth/v1/health" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          HTTP_CODE=$(curl "${CURL_ARGS[@]}")
           CURL_EXIT=$?
           set -e
 
