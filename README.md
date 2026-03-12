@@ -73,7 +73,7 @@ A API sobe em `http://localhost:3333` e o banco em `localhost:5438`.
 
 ## Keep Alive (GitHub Actions)
 
-O workflow `.github/workflows/keep-alive.yml` executa pings periódicos no backend e no Supabase.
+O workflow `.github/workflows/keep-alive.yml` executa pings periodicos no backend e no Supabase.
 
 Configure os valores em `Settings > Secrets and variables > Actions` (Secrets ou Variables):
 
@@ -125,6 +125,7 @@ Variaveis opcionais para admin:
 - `GET /books`
 - `GET /books/:id`
 - `GET /loans/me`
+- `POST /loans` (ROLE_ADMIN pode informar `userId`; ROLE_USER cria emprestimo para si)
 
 ### Somente admin (`ROLE_ADMIN`)
 
@@ -143,7 +144,6 @@ Variaveis opcionais para admin:
 - `POST /books`
 - `PUT /books/:id`
 - `DELETE /books/:id`
-- `POST /loans`
 - `POST /loans/:id/return`
 - `GET /loans/active`
 - `GET /loans/overdue`
@@ -154,11 +154,13 @@ Variaveis opcionais para admin:
 
 - Autenticacao com JWT e RBAC (role admin).
 - Cadastro publico com politica de senha forte e hash com bcrypt.
+- Login retorna `name` do usuario no payload.
 - CRUD de autores.
 - CRUD de categorias.
 - CRUD de livros com validacao de categoria/autores e bloqueio de exclusao de livro emprestado.
 - Cadastro de leitor por admin com senha automatica.
 - Fluxo de emprestimo e devolucao com calculo de atraso.
+- Leitor pode registrar emprestimo proprio via `POST /loans`.
 - Listagens de emprestimos ativos, atrasados, historico e area do usuario.
 - Dashboard administrativo com metricas agregadas e dados recentes de emprestimos.
 - Tratamento centralizado de erros.
