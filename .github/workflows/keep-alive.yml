@@ -62,7 +62,8 @@ jobs:
               value="$(sanitize_value "$value")"
             fi
 
-            if [ -n "$value" ] && [[ ! "$value" =~ ^https?:// ]]; then
+            # só adiciona https:// quando não existe esquema
+            if [ -n "$value" ] && [[ ! "$value" =~ ^[A-Za-z][A-Za-z0-9+.-]*:// ]]; then
               value="https://$value"
             fi
 
@@ -73,6 +74,24 @@ jobs:
           RENDER_BACKEND_URL="$(normalize_url "$RENDER_BACKEND_URL")"
           SUPABASE_URL="$(normalize_url "$SUPABASE_URL")"
           SUPABASE_ANON_KEY="$(sanitize_value "$SUPABASE_ANON_KEY")"
+
+          # Se vier URL de conexão do Postgres/Supabase, tenta converter para URL do projeto
+          if [[ "$SUPABASE_URL" =~ ^postgres(ql)?:// ]]; then
+            PROJECT_REF=""
+            if [[ "$SUPABASE_URL" =~ postgres\.([a-z0-9]+): ]]; then
+              PROJECT_REF="${BASH_REMATCH[1]}"
+            elif [[ "$SUPABASE_URL" =~ @db\.([a-z0-9]+)\.supabase\.co ]]; then
+              PROJECT_REF="${BASH_REMATCH[1]}"
+            fi
+
+            if [ -n "$PROJECT_REF" ]; then
+              SUPABASE_URL="https://${PROJECT_REF}.supabase.co"
+              echo "::notice::SUPABASE_URL parecia ser uma URL de banco. Convertida automaticamente para $SUPABASE_URL."
+            else
+              echo "::warning::SUPABASE_URL foi informada como URL de banco (postgres://...). Use a URL do projeto (https://<project-ref>.supabase.co)."
+              SUPABASE_URL=""
+            fi
+          fi
 
           if [ -n "$RENDER_BACKEND_URL" ] && [[ ! "$RENDER_BACKEND_URL" =~ ^https?:// ]]; then
             echo "::warning::RENDER_BACKEND_URL inválida. Use formato exato como https://seu-backend.onrender.com (sem aspas)."

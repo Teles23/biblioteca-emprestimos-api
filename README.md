@@ -81,7 +81,7 @@ Configure os valores em `Settings > Secrets and variables > Actions` (Secrets ou
 - `SUPABASE_URL` (ex.: `https://xxxx.supabase.co`)
 - `SUPABASE_ANON_KEY` (opcional para o ping de keep-alive; recomendado)
 
-> Dica: salve os valores sem aspas (`"` ou `'`) e com URL completa (`https://...`).
+> Dica: salve os valores sem aspas (`"` ou `'`) e com URL completa (`https://...`). Em `SUPABASE_URL`, use a URL do projeto (`https://<project-ref>.supabase.co`), nao a connection string `postgresql://...`.
 
 Tambem e possivel executar manualmente em `workflow_dispatch` informando os inputs opcionais
 (`render_backend_url`, `supabase_url`, `supabase_anon_key`).
