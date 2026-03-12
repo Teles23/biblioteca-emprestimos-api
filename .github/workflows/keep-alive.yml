@@ -6,6 +6,16 @@ on:
     # e para manter o Supabase ativo (pausa após 7 dias de inatividade no plano free)
     - cron: '*/14 * * * *'
   workflow_dispatch: # Permite rodar manualmente também
+    inputs:
+      render_backend_url:
+        description: 'URL do backend Render (opcional para execução manual)'
+        required: false
+      supabase_url:
+        description: 'URL do projeto Supabase (opcional para execução manual)'
+        required: false
+      supabase_anon_key:
+        description: 'Supabase anon key (opcional para execução manual)'
+        required: false
 
 jobs:
   ping:
@@ -15,18 +25,21 @@ jobs:
     steps:
       - name: Resolve configuração
         env:
+          RENDER_BACKEND_URL_INPUT: ${{ github.event.inputs.render_backend_url }}
           RENDER_BACKEND_URL_SECRET: ${{ secrets.RENDER_BACKEND_URL }}
           RENDER_BACKEND_URL_VAR: ${{ vars.RENDER_BACKEND_URL }}
+          SUPABASE_URL_INPUT: ${{ github.event.inputs.supabase_url }}
           SUPABASE_URL_SECRET: ${{ secrets.SUPABASE_URL }}
           SUPABASE_URL_VAR: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY_INPUT: ${{ github.event.inputs.supabase_anon_key }}
           SUPABASE_ANON_KEY_SECRET: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_ANON_KEY_VAR: ${{ vars.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
 
-          RENDER_BACKEND_URL="${RENDER_BACKEND_URL_SECRET:-${RENDER_BACKEND_URL_VAR:-}}"
-          SUPABASE_URL="${SUPABASE_URL_SECRET:-${SUPABASE_URL_VAR:-}}"
-          SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY_SECRET:-${SUPABASE_ANON_KEY_VAR:-}}"
+          RENDER_BACKEND_URL="${RENDER_BACKEND_URL_INPUT:-${RENDER_BACKEND_URL_SECRET:-${RENDER_BACKEND_URL_VAR:-}}}"
+          SUPABASE_URL="${SUPABASE_URL_INPUT:-${SUPABASE_URL_SECRET:-${SUPABASE_URL_VAR:-}}}"
+          SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY_INPUT:-${SUPABASE_ANON_KEY_SECRET:-${SUPABASE_ANON_KEY_VAR:-}}}"
 
           # Normaliza URLs removendo barra no final
           RENDER_BACKEND_URL="${RENDER_BACKEND_URL%/}"
@@ -59,16 +72,29 @@ jobs:
             echo "::warning::SUPABASE_URL e/ou SUPABASE_ANON_KEY não configuradas. Defina em Secrets ou Variables."
           fi
 
+          if [ -z "$RENDER_BACKEND_URL" ] && { [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; }; then
+            echo "::error::Nenhuma configuração válida encontrada para os pings. Configure Secrets/Variables ou use workflow_dispatch inputs."
+            exit 1
+          fi
+
       - name: Ping Backend (Render)
         if: env.HAS_RENDER_BACKEND == 'true'
         run: |
           set -euo pipefail
 
           echo "Pingando backend no Render..."
-          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+          set +e
+          HTTP_CODE=$(curl -L -sS -o /dev/null -w "%{http_code}" \
             --connect-timeout 10 \
             --max-time 20 \
             "$RENDER_BACKEND_URL/health")
+          CURL_EXIT=$?
+          set -e
+
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "::warning::Falha de rede ao pingar backend (curl exit code $CURL_EXIT)."
+            exit 0
+          fi
 
           echo "Status: $HTTP_CODE"
           if [ "$HTTP_CODE" != "200" ]; then
@@ -81,12 +107,20 @@ jobs:
           set -euo pipefail
 
           echo "Pingando Supabase..."
-          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+          set +e
+          HTTP_CODE=$(curl -L -sS -o /dev/null -w "%{http_code}" \
             --connect-timeout 10 \
             --max-time 20 \
             "$SUPABASE_URL/auth/v1/health" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          CURL_EXIT=$?
+          set -e
+
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "::warning::Falha de rede ao pingar Supabase (curl exit code $CURL_EXIT)."
+            exit 0
+          fi
 
           echo "Status: $HTTP_CODE"
           if [ "$HTTP_CODE" != "200" ]; then
