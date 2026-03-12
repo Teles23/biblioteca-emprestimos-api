@@ -31,6 +31,7 @@ export class LoginUseCase {
       accessToken,
       user: {
         id: user.id,
+        name: user.name,
         email: user.email,
         roles: user.roles,
       },

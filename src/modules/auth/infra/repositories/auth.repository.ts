@@ -14,13 +14,14 @@ export class AuthRepository implements IAuthRepository {
       },
       select: {
         id: true,
+        name: true,
         email: true,
         password: true,
         roles: true,
       },
     });
 
-    return new AuthUserEntity(user.id, user.email, user.password, user.roles);
+    return new AuthUserEntity(user.id, user.name, user.email, user.password, user.roles);
   }
 
   async findByEmail(email: string): Promise<AuthUserEntity | null> {
@@ -28,6 +29,7 @@ export class AuthRepository implements IAuthRepository {
       where: { email },
       select: {
         id: true,
+        name: true,
         email: true,
         password: true,
         roles: true,
@@ -38,6 +40,6 @@ export class AuthRepository implements IAuthRepository {
       return null;
     }
 
-    return new AuthUserEntity(user.id, user.email, user.password, user.roles);
+    return new AuthUserEntity(user.id, user.name, user.email, user.password, user.roles);
   }
 }
