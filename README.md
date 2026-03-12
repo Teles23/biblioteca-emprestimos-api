@@ -86,6 +86,10 @@ Configure os valores em `Settings > Secrets and variables > Actions` (Secrets ou
 Tambem e possivel executar manualmente em `workflow_dispatch` informando os inputs opcionais
 (`render_backend_url`, `supabase_url`, `supabase_anon_key`).
 
+Exemplo: se sua connection string do banco for
+`postgresql://postgres.<project-ref>:<senha>@aws-1-us-east-1.pooler.supabase.com:5432/postgres?...`,
+o valor correto de `SUPABASE_URL` para o keep-alive e `https://<project-ref>.supabase.co`.
+
 ## Seed inicial
 
 O seed cria:

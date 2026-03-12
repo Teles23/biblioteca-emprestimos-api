@@ -56,8 +56,9 @@ jobs:
             local value="$1"
             value="$(sanitize_value "$value")"
 
-            # Erro comum: cadastrar KEY=https://... em vez de só o valor
-            if [[ "$value" == *=* ]]; then
+            # Erro comum: cadastrar VAR=https://... em vez de só o valor
+            # (não aplicar para URLs válidas que já contenham '=' em query string)
+            if [[ "$value" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
               value="${value#*=}"
               value="$(sanitize_value "$value")"
             fi
