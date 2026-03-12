@@ -7,6 +7,9 @@ RUN npm ci
 
 COPY . .
 
+ARG DATABASE_URL
+ARG DIRECT_URL
+
 RUN npx prisma generate
 RUN npm run build
 
