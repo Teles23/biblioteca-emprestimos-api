@@ -71,6 +71,21 @@ A API sobe em `http://localhost:3333` e o banco em `localhost:5438`.
 - `npm run prisma:migrate`: executa `prisma migrate dev`.
 - `npm run prisma:seed`: cria usuario admin e dados iniciais.
 
+## Keep Alive (GitHub Actions)
+
+O workflow `.github/workflows/keep-alive.yml` executa pings periódicos no backend e no Supabase.
+
+Configure os valores em `Settings > Secrets and variables > Actions` (Secrets ou Variables):
+
+- `RENDER_BACKEND_URL` (ex.: `https://seu-backend.onrender.com`)
+- `SUPABASE_URL` (ex.: `https://xxxx.supabase.co`)
+- `SUPABASE_ANON_KEY` (opcional para o ping de keep-alive; recomendado)
+
+> Dica: salve os valores sem aspas (`"` ou `'`) e com URL completa (`https://...`).
+
+Tambem e possivel executar manualmente em `workflow_dispatch` informando os inputs opcionais
+(`render_backend_url`, `supabase_url`, `supabase_anon_key`).
+
 ## Seed inicial
 
 O seed cria:
