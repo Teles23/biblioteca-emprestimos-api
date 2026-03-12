@@ -17,13 +17,16 @@ export class LoansController {
     };
 
     try {
-      if (!bookId || !userId) {
+      const isAdmin = request.user?.roles?.includes('ROLE_ADMIN') ?? false;
+      const effectiveUserId = isAdmin ? userId : request.user?.id;
+
+      if (!bookId || !effectiveUserId) {
         throw new AppError('Livro e usuario sao obrigatorios.', 400);
       }
 
       const [book, user] = await Promise.all([
         prisma.book.findUnique({ where: { id: bookId } }),
-        prisma.user.findUnique({ where: { id: userId } }),
+        prisma.user.findUnique({ where: { id: effectiveUserId } }),
       ]);
 
       if (!book) {
@@ -43,14 +46,14 @@ export class LoansController {
         throw new AppError('Livro ja possui emprestimo ativo.', 409);
       }
 
-      const loanDate = customLoanDate ? new Date(customLoanDate) : new Date();
-      const dueDate = customDueDate ? new Date(customDueDate) : addDays(loanDate, 14);
+      const loanDate = isAdmin && customLoanDate ? new Date(customLoanDate) : new Date();
+      const dueDate = isAdmin && customDueDate ? new Date(customDueDate) : addDays(loanDate, 14);
 
       const loan = await prisma.$transaction(async (tx) => {
         const createdLoan = await tx.loan.create({
           data: {
             bookId,
-            userId,
+            userId: effectiveUserId,
             loanDate,
             dueDate,
             status: 'ACTIVE',
