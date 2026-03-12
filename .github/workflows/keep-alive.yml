@@ -41,17 +41,37 @@ jobs:
           SUPABASE_URL="${SUPABASE_URL_INPUT:-${SUPABASE_URL_SECRET:-${SUPABASE_URL_VAR:-}}}"
           SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY_INPUT:-${SUPABASE_ANON_KEY_SECRET:-${SUPABASE_ANON_KEY_VAR:-}}}"
 
+          # Remove espaços nas pontas e aspas simples/duplas acidentais
+          sanitize_value() {
+            local value="$1"
+            value="$(echo "$value" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            value="${value%\"}"
+            value="${value#\"}"
+            value="${value%'}"
+            value="${value#'}"
+            echo "$value"
+          }
+
+          RENDER_BACKEND_URL="$(sanitize_value "$RENDER_BACKEND_URL")"
+          SUPABASE_URL="$(sanitize_value "$SUPABASE_URL")"
+          SUPABASE_ANON_KEY="$(sanitize_value "$SUPABASE_ANON_KEY")"
+
           # Normaliza URLs removendo barra no final
           RENDER_BACKEND_URL="${RENDER_BACKEND_URL%/}"
           SUPABASE_URL="${SUPABASE_URL%/}"
 
+          # Se alguém salvou apenas o domínio do Supabase sem protocolo, tenta corrigir automaticamente
+          if [ -n "$SUPABASE_URL" ] && [[ "$SUPABASE_URL" =~ ^[A-Za-z0-9.-]+\.supabase\.co$ ]]; then
+            SUPABASE_URL="https://$SUPABASE_URL"
+          fi
+
           if [ -n "$RENDER_BACKEND_URL" ] && [[ ! "$RENDER_BACKEND_URL" =~ ^https?:// ]]; then
-            echo "::warning::RENDER_BACKEND_URL sem esquema http(s). Valor recebido parece inválido."
+            echo "::warning::RENDER_BACKEND_URL inválida. Use formato exato como https://seu-backend.onrender.com (sem aspas)."
             RENDER_BACKEND_URL=""
           fi
 
           if [ -n "$SUPABASE_URL" ] && [[ ! "$SUPABASE_URL" =~ ^https?:// ]]; then
-            echo "::warning::SUPABASE_URL sem esquema http(s). Valor recebido parece inválido."
+            echo "::warning::SUPABASE_URL inválida. Use formato exato como https://xxxx.supabase.co (sem aspas)."
             SUPABASE_URL=""
           fi
 
@@ -69,7 +89,7 @@ jobs:
             echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> "$GITHUB_ENV"
           else
             echo "HAS_SUPABASE=false" >> "$GITHUB_ENV"
-            echo "::warning::SUPABASE_URL e/ou SUPABASE_ANON_KEY não configuradas. Defina em Secrets ou Variables."
+            echo "::warning::SUPABASE_URL e/ou SUPABASE_ANON_KEY não configuradas. Defina em Secrets/Variables sem aspas e com URL completa."
           fi
 
           if [ -z "$RENDER_BACKEND_URL" ] && { [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; }; then
