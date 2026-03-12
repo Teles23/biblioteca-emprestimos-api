@@ -4,7 +4,7 @@ on:
   schedule:
     # Roda a cada 14 minutos para evitar que o Render durma (dorme após 15 min de inatividade)
     # e para manter o Supabase ativo (pausa após 7 dias de inatividade no plano free)
-    - cron: '*/14 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch: # Permite rodar manualmente também
     inputs:
       render_backend_url:
@@ -190,3 +190,4 @@ jobs:
           if [ "$HTTP_CODE" != "200" ]; then
             echo "::warning::Supabase retornou status $HTTP_CODE em /auth/v1/health"
           fi
+

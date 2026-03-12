@@ -74,6 +74,7 @@ A API sobe em `http://localhost:3333` e o banco em `localhost:5438`.
 ## Keep Alive (GitHub Actions)
 
 O workflow `.github/workflows/keep-alive.yml` executa pings periodicos no backend e no Supabase.
+Observacao: o schedule do GitHub Actions e best-effort e pode atrasar; usamos 10 minutos para reduzir gaps.
 
 Configure os valores em `Settings > Secrets and variables > Actions` (Secrets ou Variables):
 
