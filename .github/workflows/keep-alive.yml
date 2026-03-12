@@ -2,9 +2,9 @@ name: Keep Alive
 
 on:
   schedule:
-    # Roda a cada 14 minutos para evitar que o Render durma (dorme após 15 min de inatividade)
-    # e para manter o Supabase ativo (pausa após 7 dias de inatividade no plano free)
-    - cron: '*/10 * * * *'
+    # Runs every 1 minute (best-effort) to keep Render/Supabase alive.
+    # GitHub Actions schedules can be delayed.
+    - cron: '*/1 * * * *'
   workflow_dispatch: # Permite rodar manualmente também
     inputs:
       render_backend_url:
@@ -190,4 +190,5 @@ jobs:
           if [ "$HTTP_CODE" != "200" ]; then
             echo "::warning::Supabase retornou status $HTTP_CODE em /auth/v1/health"
           fi
+
 
