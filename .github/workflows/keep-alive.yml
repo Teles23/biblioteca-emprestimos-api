@@ -2,9 +2,9 @@ name: Keep Alive
 
 on:
   schedule:
-    # Runs every 1 minute (best-effort) to keep Render/Supabase alive.
-    # GitHub Actions schedules can be delayed.
-    - cron: '*/1 * * * *'
+    # GitHub Actions schedule minimum is 5 minutes (best-effort).
+    # Using 5 minutes to keep Render/Supabase alive.
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Permite rodar manualmente também
     inputs:
       render_backend_url:
