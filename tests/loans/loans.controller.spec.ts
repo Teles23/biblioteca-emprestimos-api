@@ -21,6 +21,11 @@ describe('LoansController', () => {
   it('should create loan successfully', async () => {
     const controller = new LoansController();
     const request = {
+      user: {
+        id: 'admin-1',
+        roles: ['ROLE_ADMIN'],
+        email: 'admin@example.com',
+      },
       body: {
         bookId: 'book-1',
         userId: 'user-1',
@@ -61,6 +66,11 @@ describe('LoansController', () => {
   it('should fail when book is unavailable', async () => {
     const controller = new LoansController();
     const request = {
+      user: {
+        id: 'admin-1',
+        roles: ['ROLE_ADMIN'],
+        email: 'admin@example.com',
+      },
       body: {
         bookId: 'book-1',
         userId: 'user-1',
