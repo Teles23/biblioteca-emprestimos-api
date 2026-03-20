@@ -20,6 +20,9 @@ Copie `.env.example` para `.env` e ajuste os valores:
 - `DATABASE_URL`
 - `JWT_SECRET`
 - `PORT`
+- `KEEP_ALIVE_ENABLED` (opcional)
+- `KEEP_ALIVE_INTERVAL_MS` (opcional)
+- `KEEP_ALIVE_TARGETS` (opcional)
 
 ## Como executar
 
@@ -90,6 +93,21 @@ Tambem e possivel executar manualmente em `workflow_dispatch` informando os inpu
 Exemplo: se sua connection string do banco for
 `postgresql://postgres.<project-ref>:<senha>@aws-1-us-east-1.pooler.supabase.com:5432/postgres?...`,
 o valor correto de `SUPABASE_URL` para o keep-alive e `https://<project-ref>.supabase.co`.
+
+## Keep Alive interno no Render
+
+Tambem e possivel fazer este servidor pingar outro backend periodicamente usando variaveis de ambiente:
+
+- `KEEP_ALIVE_ENABLED=true`
+- `KEEP_ALIVE_INTERVAL_MS=600000` (10 minutos)
+- `KEEP_ALIVE_TARGETS=https://eduia-backend.onrender.com`
+
+Quando a URL for informada sem path, a API usa automaticamente `/health`, entao o exemplo acima vira:
+`https://eduia-backend.onrender.com/health`.
+
+> Importante: esta estrategia ajuda quando pelo menos um dos servicos continua ativo para acordar o outro.
+> Se os dois servicos forem suspensos ao mesmo tempo, os timers internos tambem param. Para um keep-alive
+> mais confiavel, mantenha o workflow do GitHub Actions ou outro monitor externo.
 
 ## Seed inicial
 
