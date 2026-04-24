@@ -5,10 +5,11 @@ import { Pool } from 'pg';
 import { env } from '../../../../config/env';
 
 const isProduction = process.env.NODE_ENV === 'production';
+const useSSL = isProduction && process.env.DATABASE_SSL !== 'false';
 
 const pool = new Pool({
   connectionString: env.databaseUrl,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ssl: useSSL ? { rejectUnauthorized: false } : false,
 });
 
 const adapter = new PrismaPg(pool);
