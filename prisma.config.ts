@@ -8,7 +8,6 @@ export default defineConfig({
   },
   datasource: {
     url: env('DATABASE_URL'),
-    // @ts-ignore - Prisma 7 directUrl support is required for Supabase migrations
     directUrl: env('DIRECT_URL'),
   },
-} as any);
+});

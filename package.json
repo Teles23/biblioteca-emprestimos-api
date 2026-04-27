@@ -14,7 +14,7 @@
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx src/shared/infra/database/prisma/seed.ts"
+    "prisma:seed": "node dist/shared/infra/database/prisma/seed.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
